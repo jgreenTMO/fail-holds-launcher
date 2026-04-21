@@ -10,27 +10,20 @@
     --bg: #060f06;
     --bg2: #081308;
     --bg3: #0a2a0a;
-    --green: #4aff4a;
-    --green2: #2aaa2a;
-    --green3: #79ff79;
-    --warn: #ffbb00;
-    --contam: #ff7744;
-    --appear: #44ccff;
+    --green: #3ddd3d;
+    --green-btn: #3ddd3d;
+    --green-hover: #52ee52;
+    --green-active: #2aaa2a;
+    --green-scramble: #4aff4a;
     --text-dim: rgba(74,255,74,0.45);
     --text-soft: rgba(74,255,74,0.55);
     --text-faint: rgba(74,255,74,0.3);
-    --panel: rgba(10,42,10,0.66);
     --border: rgba(74,255,74,0.25);
   }
 
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  html,
-  body {
+  html, body {
     width: 100%;
     height: 100%;
     background: var(--bg);
@@ -60,10 +53,8 @@
     z-index: 2;
     background: repeating-linear-gradient(
       to bottom,
-      transparent 0px,
-      transparent 3px,
-      rgba(0, 0, 0, 0.18) 3px,
-      rgba(0, 0, 0, 0.18) 4px
+      transparent 0px, transparent 3px,
+      rgba(0,0,0,0.18) 3px, rgba(0,0,0,0.18) 4px
     );
   }
 
@@ -72,7 +63,7 @@
     inset: 0;
     pointer-events: none;
     z-index: 3;
-    background: radial-gradient(ellipse at center, transparent 54%, rgba(0, 0, 0, 0.72) 100%);
+    background: radial-gradient(ellipse at center, transparent 54%, rgba(0,0,0,0.72) 100%);
   }
 
   #glitch-canvas {
@@ -83,35 +74,21 @@
     opacity: 0;
   }
 
-  .css-glitch-1,
-  .css-glitch-2 {
-    position: absolute;
-    inset: 0;
-    z-index: 4;
-    pointer-events: none;
-    opacity: 0;
+  .css-glitch-1, .css-glitch-2 {
+    position: absolute; inset: 0;
+    z-index: 4; pointer-events: none; opacity: 0;
   }
-
   .glitch-active .css-glitch-1 {
-    opacity: 1;
-    background: rgba(74, 255, 74, 0.07);
+    opacity: 1; background: rgba(74,255,74,0.07);
     animation: glitch-shift-1 0.18s steps(1) 3;
   }
-
   .glitch-active .css-glitch-2 {
-    opacity: 1;
-    background: rgba(255, 60, 60, 0.05);
+    opacity: 1; background: rgba(255,60,60,0.05);
     animation: glitch-shift-2 0.22s steps(1) 3;
     animation-delay: 0.04s;
   }
 
-  .corner {
-    position: absolute;
-    width: 18px;
-    height: 18px;
-    z-index: 5;
-  }
-
+  .corner { position: absolute; width: 18px; height: 18px; z-index: 5; }
   .corner.tl { top: 14px; left: 14px; border-top: 1.5px solid rgba(74,255,74,0.4); border-left: 1.5px solid rgba(74,255,74,0.4); }
   .corner.tr { top: 14px; right: 14px; border-top: 1.5px solid rgba(74,255,74,0.4); border-right: 1.5px solid rgba(74,255,74,0.4); }
   .corner.bl { bottom: 14px; left: 14px; border-bottom: 1.5px solid rgba(74,255,74,0.4); border-left: 1.5px solid rgba(74,255,74,0.4); }
@@ -128,42 +105,44 @@
     text-align: center;
   }
 
+  /* HEADER — was 11px, now 14px */
   .corp-header {
-    font-size: 11px;
+    font-size: 14px;
     letter-spacing: 3px;
     text-transform: uppercase;
     color: var(--text-dim);
     margin-bottom: 28px;
   }
 
-  .title-block {
-    margin-bottom: 12px;
-  }
+  .title-block { margin-bottom: 12px; }
 
+  /* TITLE — was clamp(24,4vw,30), now clamp(28,4.5vw,36) */
   .title-main {
     display: block;
-    font-size: clamp(24px, 4vw, 30px);
+    font-size: clamp(28px, 4.5vw, 36px);
     font-weight: 700;
     letter-spacing: 5px;
     line-height: 1.2;
     color: var(--green);
-    text-shadow: 0 0 14px rgba(74,255,74,0.5);
+    text-shadow: 0 0 14px rgba(61,221,61,0.5);
   }
 
+  /* SUBTITLE — was clamp(15,2.4vw,18), now clamp(17,2.8vw,22) */
   .title-sub-line {
     display: block;
     margin-top: 6px;
-    font-size: clamp(15px, 2.4vw, 18px);
+    font-size: clamp(17px, 2.8vw, 22px);
     font-weight: 700;
     letter-spacing: 3px;
     color: var(--green);
-    text-shadow: 0 0 10px rgba(74,255,74,0.4);
+    text-shadow: 0 0 10px rgba(61,221,61,0.4);
   }
 
+  /* CAPTION — was 11px, now 14px */
   .title-caption {
     display: block;
     margin-top: 10px;
-    font-size: 11px;
+    font-size: 14px;
     letter-spacing: 3px;
     color: var(--text-soft);
   }
@@ -175,63 +154,54 @@
     margin: 26px 0 24px;
     background: var(--border);
   }
-
-  .divider::before,
-  .divider::after {
-    content: '';
-    position: absolute;
-    top: -2.5px;
-    width: 6px;
-    height: 6px;
-    background: var(--green);
+  .divider::before, .divider::after {
+    content: ''; position: absolute; top: -2.5px;
+    width: 6px; height: 6px; background: var(--green);
   }
-
   .divider::before { left: 0; }
   .divider::after { right: 0; }
 
+  /* STATUS — was 11px, now 14px */
   .status-line {
-    min-height: 20px;
+    min-height: 22px;
     margin-bottom: 30px;
-    font-size: 11px;
+    font-size: 14px;
     letter-spacing: 2px;
     color: rgba(74,255,74,0.5);
   }
 
   .cursor {
     display: inline-block;
-    width: 8px;
-    height: 13px;
+    width: 9px; height: 15px;
     margin-left: 4px;
     vertical-align: middle;
     background: var(--green);
     animation: blink 1.1s step-end infinite;
   }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
-  }
-
+  /* BTN LABEL — was 9px, now 12px */
   .btn-label-top {
     margin-bottom: 13px;
-    font-size: 9px;
+    font-size: 12px;
     letter-spacing: 4px;
     color: var(--text-dim);
   }
 
+  /* BUTTON — larger, heavier, matched green tone */
   #launch-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: min(300px, 92vw);
-    height: 58px;
-    border: 2px solid var(--green);
-    background: var(--green);
+    width: min(340px, 92vw);
+    height: 64px;
+    border: 2.5px solid var(--green-btn);
+    background: var(--green-btn);
     color: var(--bg);
     font-family: 'Courier New', Courier, monospace;
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 700;
-    letter-spacing: 4px;
+    letter-spacing: 3.5px;
     text-transform: uppercase;
     cursor: pointer;
     user-select: none;
@@ -243,68 +213,52 @@
   }
 
   #launch-btn:hover {
-    background: var(--green3);
-    box-shadow: 0 0 30px rgba(74,255,74,0.6), inset 0 0 14px rgba(255,255,255,0.12);
+    background: var(--green-hover);
+    box-shadow: 0 0 28px rgba(61,221,61,0.55), inset 0 0 12px rgba(255,255,255,0.1);
   }
-
-  #launch-btn:active {
-    background: var(--green2);
-  }
-
+  #launch-btn:active { background: var(--green-active); }
   #launch-btn.scrambling {
     background: var(--bg);
-    color: var(--green);
-    border-color: var(--green);
+    color: var(--green-scramble);
+    border-color: var(--green-scramble);
     box-shadow: 0 0 20px rgba(74,255,74,0.45);
   }
 
   #btn-text {
     pointer-events: none;
-    font-size: 15px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 17px;
     font-weight: 700;
-    letter-spacing: 4px;
+    letter-spacing: 3.5px;
   }
 
+  /* FOOTER — was 10px, now 13px */
   .footer-line {
     margin-top: 30px;
-    font-size: 10px;
+    font-size: 13px;
     letter-spacing: 2px;
     color: var(--text-faint);
   }
 
   @keyframes glitch-shift-1 {
-    0%, 100% { clip-path: inset(0 0 95% 0); transform: translateX(0); }
-    20%      { clip-path: inset(10% 0 70% 0); transform: translateX(-6px); }
-    40%      { clip-path: inset(40% 0 40% 0); transform: translateX(5px); }
-    60%      { clip-path: inset(70% 0 10% 0); transform: translateX(-4px); }
-    80%      { clip-path: inset(90% 0 2% 0); transform: translateX(3px); }
+    0%,100%{ clip-path: inset(0 0 95% 0); transform: translateX(0); }
+    20%    { clip-path: inset(10% 0 70% 0); transform: translateX(-6px); }
+    40%    { clip-path: inset(40% 0 40% 0); transform: translateX(5px); }
+    60%    { clip-path: inset(70% 0 10% 0); transform: translateX(-4px); }
+    80%    { clip-path: inset(90% 0 2% 0); transform: translateX(3px); }
   }
-
   @keyframes glitch-shift-2 {
-    0%, 100% { clip-path: inset(0 0 95% 0); transform: translateX(0); }
-    25%      { clip-path: inset(20% 0 55% 0); transform: translateX(7px); }
-    50%      { clip-path: inset(50% 0 25% 0); transform: translateX(-5px); }
-    75%      { clip-path: inset(75% 0 5% 0); transform: translateX(4px); }
+    0%,100%{ clip-path: inset(0 0 95% 0); transform: translateX(0); }
+    25%    { clip-path: inset(20% 0 55% 0); transform: translateX(7px); }
+    50%    { clip-path: inset(50% 0 25% 0); transform: translateX(-5px); }
+    75%    { clip-path: inset(75% 0 5% 0); transform: translateX(4px); }
   }
 
   @media (max-width: 600px) {
-    #terminal-launcher {
-      padding: 28px 16px;
-    }
-
-    .corp-header {
-      line-height: 1.5;
-      margin-bottom: 22px;
-    }
-
-    .divider {
-      margin: 22px 0 20px;
-    }
-
-    #launch-btn {
-      height: 56px;
-      letter-spacing: 3px;
-    }
+    #terminal-launcher { padding: 28px 16px; }
+    .corp-header { line-height: 1.5; margin-bottom: 22px; }
+    .divider { margin: 22px 0 20px; }
+    #launch-btn { height: 58px; letter-spacing: 2.5px; }
   }
 </style>
 </head>
@@ -349,136 +303,90 @@
 (function () {
   var APP_URL = 'https://apps.powerapps.com/play/e/default-b67d722d-aa8a-4777-a169-ebeb7a6a3b67/a/3087df0e-02ac-4e69-b189-073eb430e74e?tenantId=b67d722d-aa8a-4777-a169-ebeb7a6a3b67';
 
-  var launcher = document.getElementById('terminal-launcher');
-  var canvas = document.getElementById('glitch-canvas');
-  var statusEl = document.getElementById('status-text');
-  var btnEl = document.getElementById('launch-btn');
-  var btnTextEl = document.getElementById('btn-text');
-  var todayEl = document.getElementById('today-date');
-  var canvasOk = false;
-  var ctx = null;
+  var launcher   = document.getElementById('terminal-launcher');
+  var canvas     = document.getElementById('glitch-canvas');
+  var statusEl   = document.getElementById('status-text');
+  var btnEl      = document.getElementById('launch-btn');
+  var btnTextEl  = document.getElementById('btn-text');
+  var todayEl    = document.getElementById('today-date');
+  var canvasOk   = false;
+  var ctx        = null;
   var isScrambling = false;
-  var scrambleRAF = null;
-  var statusTimer = null;
-  var glitchTimer = null;
-  var resizeHandler = null;
+  var scrambleRAF  = null;
 
-  todayEl.textContent = new Date().toLocaleDateString('en-US', {
-    month: '2-digit',
-    day: '2-digit',
-    year: 'numeric'
-  });
+  todayEl.textContent = new Date().toLocaleDateString('en-US', { month:'2-digit', day:'2-digit', year:'numeric' });
 
   try {
     ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.fillRect(0, 0, 1, 1);
-      canvasOk = true;
-    }
-  } catch (e) {
-    canvasOk = false;
-    ctx = null;
-  }
+    if (ctx) { ctx.fillRect(0,0,1,1); canvasOk = true; }
+  } catch(e) { canvasOk = false; ctx = null; }
 
-  function rInt(a, b) {
-    return Math.floor(Math.random() * (b - a)) + a;
-  }
+  function rInt(a,b){ return Math.floor(Math.random()*(b-a))+a; }
 
   function resizeCanvas() {
-    canvas.width = launcher.offsetWidth;
+    canvas.width  = launcher.offsetWidth;
     canvas.height = launcher.offsetHeight;
+  }
+
+  function scheduleGlitch() {
+    window.setTimeout(function(){
+      canvasOk ? runCanvasGlitch() : runCssGlitch();
+    }, rInt(2800,7000));
   }
 
   function runCssGlitch() {
     launcher.classList.add('glitch-active');
-    window.setTimeout(function () {
+    window.setTimeout(function(){
       launcher.classList.remove('glitch-active');
       scheduleGlitch();
     }, 350);
   }
 
-  function scheduleGlitch() {
-    glitchTimer = window.setTimeout(function () {
-      if (canvasOk) {
-        runCanvasGlitch();
-      } else {
-        runCssGlitch();
-      }
-    }, rInt(2800, 7000));
-  }
-
   function runCanvasGlitch() {
-    if (!canvasOk || !ctx) {
-      runCssGlitch();
-      return;
-    }
-
+    if (!canvasOk || !ctx) { runCssGlitch(); return; }
     resizeCanvas();
-
-    var w = canvas.width;
-    var h = canvas.height;
-    var duration = rInt(80, 220);
+    var w = canvas.width, h = canvas.height;
+    var duration = rInt(80,220);
     var start = performance.now();
     var slices = [];
-
-    for (var i = 0; i < rInt(3, 9); i++) {
-      slices.push({
-        y: rInt(0, h - 20),
-        sh: rInt(2, 18),
-        offset: (Math.random() - 0.5) * rInt(8, 40)
-      });
+    for (var i=0; i<rInt(3,9); i++) {
+      slices.push({ y:rInt(0,h-20), sh:rInt(2,18), offset:(Math.random()-0.5)*rInt(8,40) });
     }
-
-    var noiseLines = rInt(4, 12);
-
+    var noiseLines = rInt(4,12);
     function frame(now) {
       var elapsed = now - start;
-      var p;
-      var s;
-      var sl;
-      var shift;
-
       if (elapsed > duration) {
-        ctx.clearRect(0, 0, w, h);
+        ctx.clearRect(0,0,w,h);
         canvas.style.opacity = 0;
         scheduleGlitch();
         return;
       }
-
-      p = elapsed / duration;
-      canvas.style.opacity = String(Math.sin(p * Math.PI) * 0.85);
-      ctx.clearRect(0, 0, w, h);
-
-      for (s = 0; s < slices.length; s++) {
-        sl = slices[s];
-        shift = sl.offset * Math.sin(p * Math.PI);
-
-        ctx.fillStyle = 'rgba(0,0,0,' + (0.55 + Math.random() * 0.3) + ')';
-        ctx.fillRect(0, sl.y, w, sl.sh);
-
-        ctx.fillStyle = 'rgba(74,255,74,' + (0.06 + Math.random() * 0.08) + ')';
-        ctx.fillRect(shift, sl.y, w, sl.sh);
-
-        if (Math.random() < 0.25) {
-          ctx.fillStyle = 'rgba(255,74,74,' + (0.04 + Math.random() * 0.05) + ')';
-          ctx.fillRect(shift + rInt(-4, 4), sl.y, w, sl.sh);
+      var p = elapsed / duration;
+      canvas.style.opacity = String(Math.sin(p*Math.PI)*0.85);
+      ctx.clearRect(0,0,w,h);
+      for (var s=0; s<slices.length; s++) {
+        var sl = slices[s];
+        var shift = sl.offset * Math.sin(p*Math.PI);
+        ctx.fillStyle = 'rgba(0,0,0,'+(0.55+Math.random()*0.3)+')';
+        ctx.fillRect(0,sl.y,w,sl.sh);
+        ctx.fillStyle = 'rgba(74,255,74,'+(0.06+Math.random()*0.08)+')';
+        ctx.fillRect(shift,sl.y,w,sl.sh);
+        if (Math.random()<0.25) {
+          ctx.fillStyle = 'rgba(255,74,74,'+(0.04+Math.random()*0.05)+')';
+          ctx.fillRect(shift+rInt(-4,4),sl.y,w,sl.sh);
         }
       }
-
-      for (s = 0; s < noiseLines; s++) {
-        ctx.fillStyle = 'rgba(74,255,74,' + (0.03 + Math.random() * 0.06) + ')';
-        ctx.fillRect(rInt(0, w - 120), rInt(0, h), rInt(20, 120), 1);
+      for (var n=0; n<noiseLines; n++) {
+        ctx.fillStyle = 'rgba(74,255,74,'+(0.03+Math.random()*0.06)+')';
+        ctx.fillRect(rInt(0,w-120),rInt(0,h),rInt(20,120),1);
       }
-
-      if (Math.random() < 0.18) {
-        ctx.fillStyle = 'rgba(74,255,74,' + (0.03 + Math.random() * 0.04) + ')';
-        ctx.fillRect(0, rInt(0, h - 40), w, rInt(6, 30));
+      if (Math.random()<0.18) {
+        ctx.fillStyle = 'rgba(74,255,74,'+(0.03+Math.random()*0.04)+')';
+        ctx.fillRect(0,rInt(0,h-40),w,rInt(6,30));
       }
-
-      scrambleRAF = window.requestAnimationFrame(frame);
+      window.requestAnimationFrame(frame);
     }
-
-    scrambleRAF = window.requestAnimationFrame(frame);
+    window.requestAnimationFrame(frame);
   }
 
   var statusMessages = [
@@ -491,93 +399,60 @@
     'POWER AUTOMATE \u00a0|\u00a0 FLOWS ACTIVE',
     'SYSTEM: READY \u00a0|\u00a0 AWAITING OPERATOR'
   ];
-
   var msgIdx = 0;
-
-  statusTimer = window.setInterval(function () {
-    msgIdx = (msgIdx + 1) % statusMessages.length;
-    statusEl.innerHTML = statusMessages[msgIdx] + '<span class="cursor"></span>';
+  window.setInterval(function(){
+    msgIdx = (msgIdx+1) % statusMessages.length;
+    statusEl.innerHTML = statusMessages[msgIdx]+'<span class="cursor"></span>';
   }, 4200);
 
-  var alien = '!@#$%^&*<>?/\\|[]{}~±§¶ΔΨΩΞΛΘΦαβγδεζηθ';
+  var alien = '!@#$%^&*<>?/\\|[]{}~\u00b1\u00a7\u00b6\u0394\u03a8\u03a9\u039e\u039b\u0398\u03a6\u03b1\u03b2\u03b3\u03b4\u03b5\u03b6\u03b7\u03b8';
   var defaultText = 'OPEN FAIL HOLDS APP';
 
-  function pickAlien() {
-    return alien[Math.floor(Math.random() * alien.length)];
-  }
+  function pickAlien(){ return alien[Math.floor(Math.random()*alien.length)]; }
 
   function scrambleText(finalText, durationMs, onDone) {
     var len = finalText.length;
     var startTime = performance.now();
-
     function frame(now) {
-      var elapsed = now - startTime;
-      var progress = Math.min(elapsed / durationMs, 1);
-      var resolved = Math.floor(progress * progress * len);
-      var display = '';
-      var i;
-
-      for (i = 0; i < len; i++) {
-        if (finalText[i] === ' ') {
-          display += ' ';
-        } else if (i < resolved) {
-          display += finalText[i];
-        } else {
-          display += pickAlien();
-        }
+      var elapsed  = now - startTime;
+      var progress = Math.min(elapsed/durationMs, 1);
+      var resolved = Math.floor(progress*progress*len);
+      var display  = '';
+      for (var i=0; i<len; i++) {
+        if (finalText[i]===' ') display+=' ';
+        else if (i<resolved)    display+=finalText[i];
+        else                    display+=pickAlien();
       }
-
       btnTextEl.textContent = display;
-
-      if (progress < 1) {
+      if (progress<1) {
         scrambleRAF = window.requestAnimationFrame(frame);
       } else {
         btnTextEl.textContent = finalText;
         btnEl.classList.remove('scrambling');
         isScrambling = false;
         btnEl.style.pointerEvents = '';
-        if (typeof onDone === 'function') {
-          onDone();
-        }
+        if (typeof onDone==='function') onDone();
       }
     }
-
     scrambleRAF = window.requestAnimationFrame(frame);
   }
 
-  btnEl.addEventListener('click', function (e) {
+  btnEl.addEventListener('click', function(e) {
     e.preventDefault();
     e.stopPropagation();
-
-    if (isScrambling) {
-      return;
-    }
-
+    if (isScrambling) return;
     isScrambling = true;
     btnEl.style.pointerEvents = 'none';
-
-    if (scrambleRAF) {
-      window.cancelAnimationFrame(scrambleRAF);
-    }
-
+    if (scrambleRAF) window.cancelAnimationFrame(scrambleRAF);
     btnEl.classList.add('scrambling');
-
-    scrambleText(defaultText, 1050, function () {
+    scrambleText(defaultText, 1050, function(){
       window.location.href = APP_URL;
     });
   });
 
-  resizeHandler = function () {
-    resizeCanvas();
-  };
-  window.addEventListener('resize', resizeHandler);
+  window.addEventListener('resize', resizeCanvas);
   resizeCanvas();
-
-  if (canvasOk) {
-    window.setTimeout(runCanvasGlitch, 1200);
-  } else {
-    window.setTimeout(runCssGlitch, 1200);
-  }
+  window.setTimeout(function(){ canvasOk ? runCanvasGlitch() : runCssGlitch(); }, 1200);
 })();
 </script>
 </body>
