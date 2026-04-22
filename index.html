@@ -105,18 +105,25 @@
     text-align: center;
   }
 
-  /* HEADER — was 11px, now 14px */
   .corp-header {
     font-size: 14px;
     letter-spacing: 3px;
     text-transform: uppercase;
     color: var(--text-dim);
     margin-bottom: 28px;
+    white-space: nowrap;
+  }
+
+  .corp-header .pipe {
+    display: inline;
+  }
+
+  .corp-header .line2 {
+    display: inline;
   }
 
   .title-block { margin-bottom: 12px; }
 
-  /* TITLE — was clamp(24,4vw,30), now clamp(28,4.5vw,36) */
   .title-main {
     display: block;
     font-size: clamp(28px, 4.5vw, 36px);
@@ -127,7 +134,6 @@
     text-shadow: 0 0 14px rgba(61,221,61,0.5);
   }
 
-  /* SUBTITLE — was clamp(15,2.4vw,18), now clamp(17,2.8vw,22) */
   .title-sub-line {
     display: block;
     margin-top: 6px;
@@ -138,7 +144,6 @@
     text-shadow: 0 0 10px rgba(61,221,61,0.4);
   }
 
-  /* CAPTION — was 11px, now 14px */
   .title-caption {
     display: block;
     margin-top: 10px;
@@ -161,7 +166,6 @@
   .divider::before { left: 0; }
   .divider::after { right: 0; }
 
-  /* STATUS — was 11px, now 14px */
   .status-line {
     min-height: 22px;
     margin-bottom: 30px;
@@ -180,15 +184,6 @@
   }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-  /* BTN LABEL — was 9px, now 12px */
-  .btn-label-top {
-    margin-bottom: 13px;
-    font-size: 12px;
-    letter-spacing: 4px;
-    color: var(--text-dim);
-  }
-
-  /* BUTTON — larger, heavier, matched green tone */
   #launch-btn {
     display: inline-flex;
     align-items: center;
@@ -232,7 +227,6 @@
     letter-spacing: 3.5px;
   }
 
-  /* FOOTER — was 10px, now 13px */
   .footer-line {
     margin-top: 30px;
     font-size: 13px;
@@ -256,7 +250,13 @@
 
   @media (max-width: 600px) {
     #terminal-launcher { padding: 28px 16px; }
-    .corp-header { line-height: 1.5; margin-bottom: 22px; }
+    .corp-header {
+      white-space: normal;
+      line-height: 1.6;
+      margin-bottom: 22px;
+    }
+    .corp-header .pipe { display: none; }
+    .corp-header .line2 { display: block; }
     .divider { margin: 22px 0 20px; }
     #launch-btn { height: 58px; letter-spacing: 2.5px; }
   }
@@ -275,10 +275,10 @@
   <div class="corner br"></div>
 
   <div class="content">
-    <div class="corp-header">THERMO FISHER SCIENTIFIC &nbsp;|&nbsp; CDC INVENTORY CONTROL</div>
+    <div class="corp-header">THERMO FISHER SCIENTIFIC <span class="pipe">&nbsp;|&nbsp;</span><span class="line2">CDC INVENTORY CONTROL</span></div>
 
     <div class="title-block">
-      <span class="title-main">// FAIL HOLDS</span>
+      <span class="title-main">// CDC FAIL HOLDS</span>
       <span class="title-sub-line">MANAGEMENT REVIEW</span>
       <span class="title-caption">PHASE 2 &nbsp;·&nbsp; HOLD MANAGEMENT &nbsp;·&nbsp; POWER AUTOMATE ENABLED</span>
     </div>
@@ -288,8 +288,6 @@
     <div class="status-line" id="status-text">
       SYSTEM: READY &nbsp;|&nbsp; AWAITING OPERATOR<span class="cursor"></span>
     </div>
-
-    <div class="btn-label-top">[ INITIATE SESSION ]</div>
 
     <button id="launch-btn" type="button">
       <span id="btn-text">OPEN FAIL HOLDS APP</span>
@@ -393,7 +391,6 @@
     'CONN: SHAREPOINT \u00a0|\u00a0 STATUS OK',
     'FLOW ENGINE: ACTIVE \u00a0|\u00a0 TEAMS LINKED',
     'HOLD QUEUE: MONITORED \u00a0|\u00a0 READY',
-    'AUTH: M365 \u00a0|\u00a0 SESSION VALID',
     'DEV - FAIL HOLDS \u00a0|\u00a0 LIST CONNECTED',
     'POWER AUTOMATE \u00a0|\u00a0 FLOWS ACTIVE',
     'SYSTEM: READY \u00a0|\u00a0 AWAITING OPERATOR'
@@ -455,9 +452,9 @@
 })();
 </script>
 <!-- Silent auth ping — attempts token refresh before user clicks -->
-    <iframe src="https://login.microsoftonline.com/b67d722d-aa8a-4777-a169-ebeb7a6a3b67/oauth2/v2.0/authorize?client_id=14d82eec-204b-4c2f-b7e8-296a70dab67e&response_type=token&scope=openid&prompt=none&redirect_uri=https://apps.powerapps.com" 
-      style="display:none;width:0;height:0;border:none;" 
-      sandbox="allow-scripts allow-same-origin">
-    </iframe>
+<iframe src="https://login.microsoftonline.com/b67d722d-aa8a-4777-a169-ebeb7a6a3b67/oauth2/v2.0/authorize?client_id=14d82eec-204b-4c2f-b7e8-296a70dab67e&response_type=token&scope=openid&prompt=none&redirect_uri=https://apps.powerapps.com" 
+  style="display:none;width:0;height:0;border:none;" 
+  sandbox="allow-scripts allow-same-origin">
+</iframe>
 </body>
 </html>
