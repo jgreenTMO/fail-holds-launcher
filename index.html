@@ -105,7 +105,12 @@
     text-align: center;
   }
 
+  /* ── Corp header ── */
   .corp-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
     font-size: 14px;
     letter-spacing: 3px;
     text-transform: uppercase;
@@ -115,21 +120,31 @@
   }
 
   .corp-header .pipe {
-    display: inline;
+    /* Fixed-width separator so spacing is perfectly even */
+    display: inline-block;
+    width: 2em;
+    text-align: center;
+    letter-spacing: 0;
+    opacity: 0.5;
   }
 
-  .corp-header .line2 {
-    display: inline;
+  .corp-header .part {
+    /* Both sides of the pipe share the same tracking */
+    letter-spacing: 3px;
   }
 
+  /* ── Title block ── */
   .title-block { margin-bottom: 12px; }
 
   .title-main {
     display: block;
-    font-size: clamp(28px, 4.5vw, 36px);
+    /* clamp: shrinks on mobile so "// CDC FAIL HOLDS" fits one line.
+       Floor of 22px keeps it readable; 5.5vw tracks viewport; 36px caps desktop. */
+    font-size: clamp(22px, 5.5vw, 36px);
     font-weight: 700;
     letter-spacing: 5px;
     line-height: 1.2;
+    white-space: nowrap;          /* prevent mid-phrase wrapping */
     color: var(--green);
     text-shadow: 0 0 14px rgba(61,221,61,0.5);
   }
@@ -144,13 +159,7 @@
     text-shadow: 0 0 10px rgba(61,221,61,0.4);
   }
 
-  .title-caption {
-    display: block;
-    margin-top: 10px;
-    font-size: 14px;
-    letter-spacing: 3px;
-    color: var(--text-soft);
-  }
+  /* .title-caption removed — no Phase 2 fluff line */
 
   .divider {
     width: min(100%, 660px);
@@ -172,6 +181,7 @@
     font-size: 14px;
     letter-spacing: 2px;
     color: rgba(74,255,74,0.5);
+    white-space: nowrap;
   }
 
   .cursor {
@@ -188,7 +198,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: min(340px, 92vw);
+    width: min(380px, 92vw);
     height: 64px;
     border: 2.5px solid var(--green-btn);
     background: var(--green-btn);
@@ -205,6 +215,7 @@
     appearance: none;
     position: relative;
     transition: background 0.1s, box-shadow 0.15s;
+    white-space: nowrap;
   }
 
   #launch-btn:hover {
@@ -227,11 +238,25 @@
     letter-spacing: 3.5px;
   }
 
+  /* ── Footer ── */
   .footer-line {
     margin-top: 30px;
     font-size: 13px;
     letter-spacing: 2px;
     color: var(--text-faint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    white-space: nowrap;
+  }
+
+  .footer-sep {
+    display: inline-block;
+    width: 1.8em;
+    text-align: center;
+    letter-spacing: 0;
+    opacity: 0.45;
   }
 
   @keyframes glitch-shift-1 {
@@ -248,17 +273,32 @@
     75%    { clip-path: inset(75% 0 5% 0); transform: translateX(4px); }
   }
 
+  /* ── Mobile ── */
   @media (max-width: 600px) {
     #terminal-launcher { padding: 28px 16px; }
+
+    /* Stack the two header parts on separate lines, centred, no pipe */
     .corp-header {
+      flex-direction: column;
+      gap: 4px;
       white-space: normal;
-      line-height: 1.6;
       margin-bottom: 22px;
     }
     .corp-header .pipe { display: none; }
-    .corp-header .line2 { display: block; }
+
+    /* title-main: allow a slightly tighter tracking so it fits */
+    .title-main {
+      letter-spacing: 3px;
+    }
+
+    .status-line { white-space: normal; text-align: center; }
+
     .divider { margin: 22px 0 20px; }
-    #launch-btn { height: 58px; letter-spacing: 2.5px; }
+    #launch-btn { height: 58px; font-size: 15px; letter-spacing: 2px; }
+    #btn-text   { font-size: 15px; letter-spacing: 2px; }
+
+    .footer-line { flex-direction: column; gap: 3px; }
+    .footer-sep  { display: none; }
   }
 </style>
 </head>
@@ -275,12 +315,19 @@
   <div class="corner br"></div>
 
   <div class="content">
-    <div class="corp-header">THERMO FISHER SCIENTIFIC <span class="pipe">&nbsp;|&nbsp;</span><span class="line2">CDC INVENTORY CONTROL</span></div>
+
+    <!-- Corp header: fixed-width pipe gives perfectly even spacing on all screens -->
+    <div class="corp-header">
+      <span class="part">THERMO FISHER SCIENTIFIC</span>
+      <span class="pipe">|</span>
+      <span class="part">CDC INVENTORY CONTROL</span>
+    </div>
 
     <div class="title-block">
+      <!-- white-space:nowrap + clamp font-size keeps this on one line on mobile -->
       <span class="title-main">// CDC FAIL HOLDS</span>
       <span class="title-sub-line">MANAGEMENT REVIEW</span>
-      <span class="title-caption">PHASE 2 &nbsp;·&nbsp; HOLD MANAGEMENT &nbsp;·&nbsp; POWER AUTOMATE ENABLED</span>
+      <!-- Phase 2 caption removed -->
     </div>
 
     <div class="divider"></div>
@@ -290,24 +337,29 @@
     </div>
 
     <button id="launch-btn" type="button">
-      <span id="btn-text">OPEN FAIL HOLDS APP</span>
+      <span id="btn-text">ENTER FAIL HOLDS TERMINAL</span>
     </button>
 
-    <div class="footer-line">CDC INVENTORY TERMINAL &nbsp;·&nbsp; <span id="today-date"></span></div>
+    <div class="footer-line">
+      <span id="today-date"></span>
+      <span class="footer-sep">&middot;</span>
+      <span>PHASE 2 &mdash; HOLD MANAGEMENT</span>
+    </div>
+
   </div>
 </div>
 
 <script>
 (function () {
   var APP_URL = 'https://apps.powerapps.com/play/e/default-b67d722d-aa8a-4777-a169-ebeb7a6a3b67/a/3087df0e-02ac-4e69-b189-073eb430e74e?tenantId=b67d722d-aa8a-4777-a169-ebeb7a6a3b67&forceSignIn=true';
-  var launcher   = document.getElementById('terminal-launcher');
-  var canvas     = document.getElementById('glitch-canvas');
-  var statusEl   = document.getElementById('status-text');
-  var btnEl      = document.getElementById('launch-btn');
-  var btnTextEl  = document.getElementById('btn-text');
-  var todayEl    = document.getElementById('today-date');
-  var canvasOk   = false;
-  var ctx        = null;
+  var launcher     = document.getElementById('terminal-launcher');
+  var canvas       = document.getElementById('glitch-canvas');
+  var statusEl     = document.getElementById('status-text');
+  var btnEl        = document.getElementById('launch-btn');
+  var btnTextEl    = document.getElementById('btn-text');
+  var todayEl      = document.getElementById('today-date');
+  var canvasOk     = false;
+  var ctx          = null;
   var isScrambling = false;
   var scrambleRAF  = null;
 
@@ -386,12 +438,11 @@
     window.requestAnimationFrame(frame);
   }
 
+  // Polished status rotation — tighter, more purposeful
   var statusMessages = [
     'SYSTEM: READY \u00a0|\u00a0 AWAITING OPERATOR',
-    'CONN: SHAREPOINT \u00a0|\u00a0 STATUS OK',
-    'FLOW ENGINE: ACTIVE \u00a0|\u00a0 TEAMS LINKED',
-    'HOLD QUEUE: MONITORED \u00a0|\u00a0 READY',
-    'DEV - FAIL HOLDS \u00a0|\u00a0 LIST CONNECTED',
+    'SHAREPOINT: CONNECTED \u00a0|\u00a0 HOLDS SYNCED',
+    'FLOW ENGINE: ACTIVE \u00a0|\u00a0 ALERTS LIVE',
     'POWER AUTOMATE \u00a0|\u00a0 FLOWS ACTIVE',
     'SYSTEM: READY \u00a0|\u00a0 AWAITING OPERATOR'
   ];
@@ -402,7 +453,7 @@
   }, 4200);
 
   var alien = '!@#$%^&*<>?/\\|[]{}~\u00b1\u00a7\u00b6\u0394\u03a8\u03a9\u039e\u039b\u0398\u03a6\u03b1\u03b2\u03b3\u03b4\u03b5\u03b6\u03b7\u03b8';
-  var defaultText = 'OPEN FAIL HOLDS APP';
+  var defaultText = 'ENTER FAIL HOLDS TERMINAL';
 
   function pickAlien(){ return alien[Math.floor(Math.random()*alien.length)]; }
 
