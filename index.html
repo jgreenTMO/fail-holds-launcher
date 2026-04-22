@@ -301,14 +301,7 @@
 
 <script>
 (function () {
-  function isMobile() {
-  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-}
-
-var APP_URL = isMobile()
-  ? 'https://apps.powerapps.com/play/e/default-b67d722d-aa8a-4777-a169-ebeb7a6a3b67/a/3087df0e-02ac-4e69-b189-073eb430e74e?tenantId=b67d722d-aa8a-4777-a169-ebeb7a6a3b67&forceSignIn=true&hint='
-  : 'https://apps.powerapps.com/play/e/default-b67d722d-aa8a-4777-a169-ebeb7a6a3b67/a/3087df0e-02ac-4e69-b189-073eb430e74e?tenantId=b67d722d-aa8a-4777-a169-ebeb7a6a3b67&forceSignIn=true';
-
+  var APP_URL = 'https://apps.powerapps.com/play/e/default-b67d722d-aa8a-4777-a169-ebeb7a6a3b67/a/3087df0e-02ac-4e69-b189-073eb430e74e?tenantId=b67d722d-aa8a-4777-a169-ebeb7a6a3b67&forceSignIn=true';
   var launcher   = document.getElementById('terminal-launcher');
   var canvas     = document.getElementById('glitch-canvas');
   var statusEl   = document.getElementById('status-text');
