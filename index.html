@@ -36,6 +36,7 @@
     inset: 0;
     width: 100%;
     height: 100vh;
+    height: 100dvh;
     background: radial-gradient(ellipse at center, rgba(10,42,10,0.65) 0%, var(--bg) 68%);
     display: flex;
     align-items: center;
@@ -277,28 +278,30 @@
   @media (max-width: 600px) {
     #terminal-launcher { padding: 28px 16px; }
 
-    /* Stack the two header parts on separate lines, centred, no pipe */
     .corp-header {
       flex-direction: column;
       gap: 4px;
       white-space: normal;
-      margin-bottom: 22px;
+      margin-bottom: 16px;
     }
     .corp-header .pipe { display: none; }
 
-    /* title-main: allow a slightly tighter tracking so it fits */
-    .title-main {
-      letter-spacing: 3px;
+    .title-main { letter-spacing: 3px; }
+
+    /* Shrink font + tracking so longer strings never wrap */
+    .status-line {
+      font-size: 11px;
+      letter-spacing: 1px;
+      white-space: nowrap;
+      margin-bottom: 20px;
     }
 
-    .status-line { white-space: normal; text-align: center; }
+    .divider      { margin: 16px 0 14px; }
+    #launch-btn   { height: 58px; font-size: 15px; letter-spacing: 2px; }
+    #btn-text     { font-size: 15px; letter-spacing: 2px; }
 
-    .divider { margin: 22px 0 20px; }
-    #launch-btn { height: 58px; font-size: 15px; letter-spacing: 2px; }
-    #btn-text   { font-size: 15px; letter-spacing: 2px; }
-
-    .footer-line { flex-direction: column; gap: 3px; }
-    .footer-sep  { display: none; }
+    .footer-line  { flex-direction: column; gap: 3px; margin-top: 20px; }
+    .footer-sep   { display: none; }
   }
 </style>
 </head>
@@ -443,7 +446,6 @@
     'SYSTEM: READY \u00a0|\u00a0 AWAITING OPERATOR',
     'SHAREPOINT: CONNECTED \u00a0|\u00a0 HOLDS SYNCED',
     'FLOW ENGINE: ACTIVE \u00a0|\u00a0 ALERTS LIVE',
-    'POWER AUTOMATE \u00a0|\u00a0 FLOWS ACTIVE',
     'SYSTEM: READY \u00a0|\u00a0 AWAITING OPERATOR'
   ];
   var msgIdx = 0;
