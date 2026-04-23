@@ -366,6 +366,13 @@
   var isScrambling = false;
   var scrambleRAF  = null;
 
+  window.addEventListener('pageshow', function(e) {
+    if (e.persisted) {
+      var stale = document.querySelector('canvas[style*="z-index:2147483647"]');
+      if (stale && stale.parentNode) stale.parentNode.removeChild(stale);
+    }
+  });
+
   todayEl.textContent = new Date().toLocaleDateString('en-US', { month:'2-digit', day:'2-digit', year:'numeric' });
 
   try {
@@ -673,7 +680,6 @@
         if (!navigated) {
           navigated = true;
           window.setTimeout(function(){
-            if (oc.parentNode) oc.parentNode.removeChild(oc);
             window.location.href = APP_URL;
           }, 40);
         }
