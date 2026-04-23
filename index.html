@@ -337,7 +337,7 @@
     </div>
 
     <button id="launch-btn" type="button">
-      <span id="btn-text">ENTER FAIL HOLDS TERMINAL</span>
+      <span id="btn-text">ENTER FAIL HOLDS</span>
     </button>
 
     <div class="footer-line">
@@ -453,7 +453,7 @@
   }, 4200);
 
   var alien = '!@#$%^&*<>?/\\|[]{}~\u00b1\u00a7\u00b6\u0394\u03a8\u03a9\u039e\u039b\u0398\u03a6\u03b1\u03b2\u03b3\u03b4\u03b5\u03b6\u03b7\u03b8';
-  var defaultText = 'ENTER FAIL HOLDS TERMINAL';
+  var defaultText = 'ENTER FAIL HOLDS';
 
   function pickAlien(){ return alien[Math.floor(Math.random()*alien.length)]; }
 
@@ -548,17 +548,27 @@
     function easeIn(t)  { return t*t; }
 
     function drawNoise(clipY, clipH) {
-      // Draw full-width noise restricted to the vertical band [clipY, clipY+clipH]
-      var blockW = 3, blockH = 3;
-      var cols = Math.ceil(ow / blockW);
-      var rows = Math.ceil(clipH / blockH);
-      for (var r = 0; r < rows; r++) {
-        for (var c = 0; c < cols; c++) {
-          octx.fillStyle = rndGreen();
-          octx.fillRect(c * blockW, clipY + r * blockH, blockW, blockH);
+      // ImageData pixel buffer — one putImageData call per frame regardless of resolution
+      var bandH = Math.ceil(clipH);
+      var imgData = octx.createImageData(ow, bandH);
+      var d = imgData.data;
+      var blockSize = 3;
+      for (var py = 0; py < bandH; py += blockSize) {
+        for (var px = 0; px < ow; px += blockSize) {
+          var c = palette[Math.floor(Math.random() * palette.length)];
+          if (Math.random() < 0.04) c = [140, 255, 140];
+          for (var by = 0; by < blockSize && py+by < bandH; by++) {
+            for (var bx = 0; bx < blockSize && px+bx < ow; bx++) {
+              var idx = ((py + by) * ow + (px + bx)) * 4;
+              d[idx]   = c[0];
+              d[idx+1] = c[1];
+              d[idx+2] = c[2];
+              d[idx+3] = 255;
+            }
+          }
         }
       }
-      // Occasional bright horizontal scan lines through the noise
+      octx.putImageData(imgData, 0, Math.floor(clipY));
       if (Math.random() < 0.35) {
         var ly = clipY + Math.random() * clipH;
         octx.fillStyle = 'rgba(74,255,74,0.18)';
@@ -571,6 +581,7 @@
       octx.clearRect(0, 0, ow, oh);
 
       var cy = oh / 2; // vertical center
+      var cx = ow / 2; // horizontal center
 
       if (elapsed < T_STATIC_END) {
         // ── Phase 1: full-screen green static ──
@@ -625,12 +636,12 @@
 
         // Main line segment
         octx.fillStyle = 'rgba(74,255,74,0.9)';
-        octx.fillRect(cy - halfW, cy - lineH, halfW * 2, lineH * 2);
+        octx.fillRect(cx - halfW, cy - lineH, halfW * 2, lineH * 2);
 
         // Bright center glow
         var glowW = Math.min(halfW, 40);
         octx.fillStyle = 'rgba(180,255,180,0.7)';
-        octx.fillRect(cy - glowW, cy - lineH, glowW * 2, lineH * 2);
+        octx.fillRect(cx - glowW, cy - lineH, glowW * 2, lineH * 2);
 
       } else if (elapsed < T_FLASH3) {
         // ── Flash 3: dot flares ──
@@ -638,10 +649,10 @@
         octx.fillStyle = '#000';
         octx.fillRect(0, 0, ow, oh);
         octx.fillStyle = 'rgba(200,255,200,0.95)';
-        octx.fillRect(cy - 6, cy - 6, 12, 12);
+        octx.fillRect(cx - 6, cy - 6, 12, 12);
         // Bloom around dot
         octx.fillStyle = 'rgba(74,255,74,0.3)';
-        octx.fillRect(cy - 14, cy - 14, 28, 28);
+        octx.fillRect(cx - 14, cy - 14, 28, 28);
 
       } else if (elapsed < T_FADE_END) {
         // ── Phase 4: dot fades to black ──
@@ -651,7 +662,7 @@
         octx.fillStyle = '#000';
         octx.fillRect(0, 0, ow, oh);
         octx.fillStyle = 'rgba(74,255,74,' + (dotAlpha * 0.9) + ')';
-        octx.fillRect(cy - 3, cy - 3, 6, 6);
+        octx.fillRect(cx - 3, cy - 3, 6, 6);
 
       } else {
         // ── Done: solid black then navigate ──
@@ -660,7 +671,10 @@
         octx.fillRect(0, 0, ow, oh);
         if (!navigated) {
           navigated = true;
-          window.setTimeout(function(){ window.location.href = APP_URL; }, 40);
+          window.setTimeout(function(){
+            if (oc.parentNode) oc.parentNode.removeChild(oc);
+            window.location.href = APP_URL;
+          }, 40);
         }
         return; // stop rAF
       }
