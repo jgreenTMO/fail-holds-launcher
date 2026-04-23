@@ -89,11 +89,37 @@
     animation-delay: 0.04s;
   }
 
+  /* ── Corner brackets ── */
   .corner { position: absolute; width: 18px; height: 18px; z-index: 5; }
   .corner.tl { top: 14px; left: 14px; border-top: 1.5px solid rgba(74,255,74,0.4); border-left: 1.5px solid rgba(74,255,74,0.4); }
   .corner.tr { top: 14px; right: 14px; border-top: 1.5px solid rgba(74,255,74,0.4); border-right: 1.5px solid rgba(74,255,74,0.4); }
   .corner.bl { bottom: 14px; left: 14px; border-bottom: 1.5px solid rgba(74,255,74,0.4); border-left: 1.5px solid rgba(74,255,74,0.4); }
   .corner.br { bottom: 14px; right: 14px; border-bottom: 1.5px solid rgba(74,255,74,0.4); border-right: 1.5px solid rgba(74,255,74,0.4); }
+
+  /* ── Tribute ── */
+  .tribute {
+    position: absolute;
+    bottom: 38px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    z-index: 5;
+    pointer-events: none;
+    font-size: 12px;
+    letter-spacing: 2.5px;
+    color: var(--green);
+    opacity: 0.55;
+    text-transform: uppercase;
+    font-family: 'Courier New', Courier, monospace;
+  }
+
+  @media (max-width: 600px) {
+    .tribute {
+      bottom: 44px;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+    }
+  }
 
   .content {
     position: relative;
@@ -317,6 +343,8 @@
   <div class="corner bl"></div>
   <div class="corner br"></div>
 
+  <div class="tribute">in loving memory of Andy Green</div>
+
   <div class="content">
 
     <!-- Corp header: fixed-width pipe gives perfectly even spacing on all screens -->
@@ -459,8 +487,7 @@
   var statusMessages = [
     'SYSTEM: READY \u00a0|\u00a0 AWAITING OPERATOR',
     'SHAREPOINT: CONNECTED \u00a0|\u00a0 LISTS SYNCED',
-    'FLOW ENGINE: ACTIVE \u00a0|\u00a0 ALERTS LIVE',
-    'SYSTEM: READY \u00a0|\u00a0 AWAITING OPERATOR'
+    'FLOW ENGINE: ACTIVE \u00a0|\u00a0 ALERTS LIVE'
   ];
   var msgIdx = 0;
   window.setInterval(function(){
