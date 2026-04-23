@@ -515,14 +515,14 @@
     // Green phosphor palette — no whites or greys
     // dark=near black-green, mid=dim green, bright=phosphor green, hot=white-green flash
     var palette = [
-      [4,  18,  4],   // near black
-      [8,  32,  8],   // very dark green
-      [14, 52,  14],  // dark green
-      [22, 80,  22],  // mid-dark green
-      [35, 120, 35],  // medium green
-      [52, 170, 52],  // bright green
-      [74, 220, 74],  // phosphor green
-      [90, 255, 90],  // hot green
+      [4,  14,  4],   // near black
+      [6,  24,  6],   // very dark green
+      [10, 38,  10],  // dark green
+      [16, 58,  16],  // mid-dark green
+      [24, 85,  24],  // medium green
+      [36, 120, 36],  // bright green
+      [50, 155, 50],  // phosphor green
+      [64, 185, 64],  // hot green — pulled back from 90,255,90
     ];
 
     function rndGreen() {
@@ -558,7 +558,7 @@
       for (var py = 0; py < bandH; py += blockSize) {
         for (var px = 0; px < ow; px += blockSize) {
           var c = palette[Math.floor(Math.random() * palette.length)];
-          if (Math.random() < 0.04) c = [140, 255, 140];
+          if (Math.random() < 0.04) c = [90, 200, 90];
           for (var by = 0; by < blockSize && py+by < bandH; by++) {
             for (var bx = 0; bx < blockSize && px+bx < ow; bx++) {
               var idx = ((py + by) * ow + (px + bx)) * 4;
@@ -592,29 +592,29 @@
         drawNoise(0, oh);
 
       } else if (elapsed < T_FLASH1) {
-        // ── Flash 1: full-screen bright green ──
+        // ── Flash 1: brief green flare, much dimmer ──
         oc.style.opacity = '1';
-        octx.fillStyle = 'rgba(120,255,120,0.92)';
+        octx.fillStyle = 'rgba(60,180,60,0.7)';
         octx.fillRect(0, 0, ow, oh);
 
       } else if (elapsed < T_COLLAPSE_END) {
-        // ── Phase 2: static collapses vertically toward center line ──
+        // ── Phase 2: blank dark screen, line emerges from center (matches CRT gif) ──
         oc.style.opacity = '1';
         var t = easeIn((elapsed - T_FLASH1) / (T_COLLAPSE_END - T_FLASH1));
-        // The noise band shrinks: from full height → a thin strip
         var halfH = Math.max(2, oh * 0.5 * (1 - t));
         var bandTop = cy - halfH;
         var bandH   = halfH * 2;
 
-        // Black mask above and below the noise band
         octx.fillStyle = '#000';
-        octx.fillRect(0, 0, ow, bandTop);
-        octx.fillRect(0, bandTop + bandH, ow, oh - (bandTop + bandH));
+        octx.fillRect(0, 0, ow, oh);
 
-        drawNoise(bandTop, bandH);
+        // Dim green band — no static, just a fading glow collapsing to the line
+        var bandAlpha = 0.18 + (1 - t) * 0.22;
+        octx.fillStyle = 'rgba(40,140,40,' + bandAlpha + ')';
+        octx.fillRect(0, bandTop, ow, bandH);
 
-        // Thin bright edge lines at top and bottom of band for CRT glow
-        octx.fillStyle = 'rgba(74,255,74,0.6)';
+        // Bright edge lines
+        octx.fillStyle = 'rgba(74,200,74,0.55)';
         octx.fillRect(0, bandTop, ow, 1);
         octx.fillRect(0, bandTop + bandH - 1, ow, 1);
 
@@ -623,7 +623,7 @@
         oc.style.opacity = '1';
         octx.fillStyle = '#000';
         octx.fillRect(0, 0, ow, oh);
-        octx.fillStyle = 'rgba(160,255,160,0.95)';
+        octx.fillStyle = 'rgba(100,220,100,0.85)';
         octx.fillRect(0, cy - 3, ow, 6);
 
       } else if (elapsed < T_DOT_END) {
@@ -650,10 +650,9 @@
         oc.style.opacity = '1';
         octx.fillStyle = '#000';
         octx.fillRect(0, 0, ow, oh);
-        octx.fillStyle = 'rgba(200,255,200,0.95)';
+        octx.fillStyle = 'rgba(140,230,140,0.88)';
         octx.fillRect(cx - 6, cy - 6, 12, 12);
-        // Bloom around dot
-        octx.fillStyle = 'rgba(74,255,74,0.3)';
+        octx.fillStyle = 'rgba(50,160,50,0.25)';
         octx.fillRect(cx - 14, cy - 14, 28, 28);
 
       } else if (elapsed < T_FADE_END) {
