@@ -365,12 +365,19 @@
   var ctx          = null;
   var isScrambling = false;
   var scrambleRAF  = null;
+  var crtRAF       = null;
+  var shutdownOverlay = null;
 
   window.addEventListener('pageshow', function(e) {
+    resetLauncher();
     if (e.persisted) {
       var stale = document.querySelector('canvas[style*="z-index:2147483647"]');
       if (stale && stale.parentNode) stale.parentNode.removeChild(stale);
     }
+  });
+
+  window.addEventListener('pagehide', function() {
+    resetLauncher();
   });
 
   todayEl.textContent = new Date().toLocaleDateString('en-US', { month:'2-digit', day:'2-digit', year:'numeric' });
@@ -466,6 +473,33 @@
 
   function pickAlien(){ return alien[Math.floor(Math.random()*alien.length)]; }
 
+  function resetLauncher() {
+    if (scrambleRAF) {
+      window.cancelAnimationFrame(scrambleRAF);
+      scrambleRAF = null;
+    }
+    if (crtRAF) {
+      window.cancelAnimationFrame(crtRAF);
+      crtRAF = null;
+    }
+    if (shutdownOverlay && shutdownOverlay.parentNode) {
+      shutdownOverlay.parentNode.removeChild(shutdownOverlay);
+    }
+    shutdownOverlay = null;
+
+    isScrambling = false;
+    btnEl.style.pointerEvents = '';
+    btnEl.classList.remove('scrambling');
+    btnTextEl.textContent = defaultText;
+    launcher.classList.remove('glitch-active');
+    canvas.style.opacity = 0;
+
+    if (ctx) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    resizeCanvas();
+  }
+
   function scrambleText(finalText, durationMs, onDone) {
     var len = finalText.length;
     var startTime = performance.now();
@@ -507,6 +541,7 @@
   function runCRTShutdown(onComplete) {
     // Create a full-screen overlay canvas that sits above everything
     var oc = document.createElement('canvas');
+    shutdownOverlay = oc;
     oc.style.cssText = [
       'position:fixed', 'inset:0', 'width:100%', 'height:100%',
       'z-index:2147483647', 'pointer-events:none', 'display:block'
@@ -540,7 +575,6 @@
     }
 
     var startTime = performance.now();
-    var crtRAF = null;
     var navigated = false;
 
     // Timing constants (ms)
