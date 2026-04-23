@@ -36,7 +36,6 @@
     inset: 0;
     width: 100%;
     height: 100vh;
-    height: 100dvh;
     background: radial-gradient(ellipse at center, rgba(10,42,10,0.65) 0%, var(--bg) 68%);
     display: flex;
     align-items: center;
@@ -278,15 +277,6 @@
   @media (max-width: 600px) {
     #terminal-launcher { padding: 28px 16px; }
 
-    .corp-header  { margin-bottom: 16px; }
-    .divider      { margin: 16px 0 14px; }
-    .footer-line  { margin-top: 20px; }
-    .status-line {
-      margin-bottom: 20px;
-      font-size: 11px;
-      letter-spacing: 1px;
-    }
-
     /* Stack the two header parts on separate lines, centred, no pipe */
     .corp-header {
       flex-direction: column;
@@ -347,7 +337,7 @@
     </div>
 
     <button id="launch-btn" type="button">
-      <span id="btn-text">ENTER FAIL HOLDS TERMINAL</span>
+      <span id="btn-text">ENTER FAIL HOLDS</span>
     </button>
 
     <div class="footer-line">
@@ -451,8 +441,9 @@
   // Polished status rotation — tighter, more purposeful
   var statusMessages = [
     'SYSTEM: READY \u00a0|\u00a0 AWAITING OPERATOR',
-    'SHAREPOINT: CONNECTED \u00a0|\u00a0 LISTS SYNCED',
+    'SHAREPOINT: CONNECTED \u00a0|\u00a0 HOLDS SYNCED',
     'FLOW ENGINE: ACTIVE \u00a0|\u00a0 ALERTS LIVE',
+    'POWER AUTOMATE \u00a0|\u00a0 FLOWS ACTIVE',
     'SYSTEM: READY \u00a0|\u00a0 AWAITING OPERATOR'
   ];
   var msgIdx = 0;
@@ -462,7 +453,7 @@
   }, 4200);
 
   var alien = '!@#$%^&*<>?/\\|[]{}~\u00b1\u00a7\u00b6\u0394\u03a8\u03a9\u039e\u039b\u0398\u03a6\u03b1\u03b2\u03b3\u03b4\u03b5\u03b6\u03b7\u03b8';
-  var defaultText = 'ENTER FAIL HOLDS TERMINAL';
+  var defaultText = 'ENTER FAIL HOLDS';
 
   function pickAlien(){ return alien[Math.floor(Math.random()*alien.length)]; }
 
@@ -493,6 +484,194 @@
     scrambleRAF = window.requestAnimationFrame(frame);
   }
 
+  // ── CRT shutdown sequence ────────────────────────────────────────────────
+  // Phases (all timings in ms):
+  //   0–400   green-tinted static fills screen (canvas noise)
+  //   400     flash: full screen bright green
+  //   400–700 static collapses vertically to a horizontal line at center
+  //   700     flash: line only
+  //   700–950 line shrinks horizontally to a center dot
+  //   950     flash: dot only
+  //   950–1100 dot fades out
+  //   1100    navigate
+
+  function runCRTShutdown(onComplete) {
+    // Create a full-screen overlay canvas that sits above everything
+    var oc = document.createElement('canvas');
+    oc.style.cssText = [
+      'position:fixed', 'inset:0', 'width:100%', 'height:100%',
+      'z-index:2147483647', 'pointer-events:none', 'display:block'
+    ].join(';');
+    document.body.appendChild(oc);
+
+    var ow = window.innerWidth;
+    var oh = window.innerHeight;
+    oc.width  = ow;
+    oc.height = oh;
+    var octx = oc.getContext('2d');
+
+    // Green phosphor palette — no whites or greys
+    // dark=near black-green, mid=dim green, bright=phosphor green, hot=white-green flash
+    var palette = [
+      [4,  18,  4],   // near black
+      [8,  32,  8],   // very dark green
+      [14, 52,  14],  // dark green
+      [22, 80,  22],  // mid-dark green
+      [35, 120, 35],  // medium green
+      [52, 170, 52],  // bright green
+      [74, 220, 74],  // phosphor green
+      [90, 255, 90],  // hot green
+    ];
+
+    function rndGreen() {
+      var c = palette[Math.floor(Math.random() * palette.length)];
+      // Occasional very bright pixel for texture
+      if (Math.random() < 0.04) c = [140, 255, 140];
+      return 'rgb('+c[0]+','+c[1]+','+c[2]+')';
+    }
+
+    var startTime = performance.now();
+    var crtRAF = null;
+    var navigated = false;
+
+    // Timing constants (ms)
+    var T_STATIC_END   = 380;   // static fills screen until here
+    var T_FLASH1       = 410;   // brief full-screen flash
+    var T_COLLAPSE_END = 680;   // static collapses to line
+    var T_FLASH2       = 710;   // line flash
+    var T_DOT_END      = 940;   // line shrinks to dot
+    var T_FLASH3       = 960;   // dot flash
+    var T_FADE_END     = 1100;  // dot fades out
+    var T_NAVIGATE     = 1120;  // navigate
+
+    function easeOut(t) { return 1 - (1-t)*(1-t); }
+    function easeIn(t)  { return t*t; }
+
+    function drawNoise(clipY, clipH) {
+      // Draw full-width noise restricted to the vertical band [clipY, clipY+clipH]
+      var blockW = 3, blockH = 3;
+      var cols = Math.ceil(ow / blockW);
+      var rows = Math.ceil(clipH / blockH);
+      for (var r = 0; r < rows; r++) {
+        for (var c = 0; c < cols; c++) {
+          octx.fillStyle = rndGreen();
+          octx.fillRect(c * blockW, clipY + r * blockH, blockW, blockH);
+        }
+      }
+      // Occasional bright horizontal scan lines through the noise
+      if (Math.random() < 0.35) {
+        var ly = clipY + Math.random() * clipH;
+        octx.fillStyle = 'rgba(74,255,74,0.18)';
+        octx.fillRect(0, ly, ow, 1 + Math.random() * 2);
+      }
+    }
+
+    function frame(now) {
+      var elapsed = now - startTime;
+      octx.clearRect(0, 0, ow, oh);
+
+      var cy = oh / 2; // vertical center
+
+      if (elapsed < T_STATIC_END) {
+        // ── Phase 1: full-screen green static ──
+        var fadeIn = Math.min(elapsed / T_STATIC_END, 1);
+        oc.style.opacity = String(fadeIn);
+        drawNoise(0, oh);
+
+      } else if (elapsed < T_FLASH1) {
+        // ── Flash 1: full-screen bright green ──
+        oc.style.opacity = '1';
+        octx.fillStyle = 'rgba(120,255,120,0.92)';
+        octx.fillRect(0, 0, ow, oh);
+
+      } else if (elapsed < T_COLLAPSE_END) {
+        // ── Phase 2: static collapses vertically toward center line ──
+        oc.style.opacity = '1';
+        var t = easeIn((elapsed - T_FLASH1) / (T_COLLAPSE_END - T_FLASH1));
+        // The noise band shrinks: from full height → a thin strip
+        var halfH = Math.max(2, oh * 0.5 * (1 - t));
+        var bandTop = cy - halfH;
+        var bandH   = halfH * 2;
+
+        // Black mask above and below the noise band
+        octx.fillStyle = '#000';
+        octx.fillRect(0, 0, ow, bandTop);
+        octx.fillRect(0, bandTop + bandH, ow, oh - (bandTop + bandH));
+
+        drawNoise(bandTop, bandH);
+
+        // Thin bright edge lines at top and bottom of band for CRT glow
+        octx.fillStyle = 'rgba(74,255,74,0.6)';
+        octx.fillRect(0, bandTop, ow, 1);
+        octx.fillRect(0, bandTop + bandH - 1, ow, 1);
+
+      } else if (elapsed < T_FLASH2) {
+        // ── Flash 2: horizontal line flares bright ──
+        oc.style.opacity = '1';
+        octx.fillStyle = '#000';
+        octx.fillRect(0, 0, ow, oh);
+        octx.fillStyle = 'rgba(160,255,160,0.95)';
+        octx.fillRect(0, cy - 3, ow, 6);
+
+      } else if (elapsed < T_DOT_END) {
+        // ── Phase 3: line shrinks horizontally to center dot ──
+        oc.style.opacity = '1';
+        var t2 = easeIn((elapsed - T_FLASH2) / (T_DOT_END - T_FLASH2));
+        var halfW = Math.max(2, ow * 0.5 * (1 - t2));
+        var lineH = Math.max(1, Math.round(3 * (1 - t2 * 0.6))); // line also thins slightly
+
+        octx.fillStyle = '#000';
+        octx.fillRect(0, 0, ow, oh);
+
+        // Main line segment
+        octx.fillStyle = 'rgba(74,255,74,0.9)';
+        octx.fillRect(cy - halfW, cy - lineH, halfW * 2, lineH * 2);
+
+        // Bright center glow
+        var glowW = Math.min(halfW, 40);
+        octx.fillStyle = 'rgba(180,255,180,0.7)';
+        octx.fillRect(cy - glowW, cy - lineH, glowW * 2, lineH * 2);
+
+      } else if (elapsed < T_FLASH3) {
+        // ── Flash 3: dot flares ──
+        oc.style.opacity = '1';
+        octx.fillStyle = '#000';
+        octx.fillRect(0, 0, ow, oh);
+        octx.fillStyle = 'rgba(200,255,200,0.95)';
+        octx.fillRect(cy - 6, cy - 6, 12, 12);
+        // Bloom around dot
+        octx.fillStyle = 'rgba(74,255,74,0.3)';
+        octx.fillRect(cy - 14, cy - 14, 28, 28);
+
+      } else if (elapsed < T_FADE_END) {
+        // ── Phase 4: dot fades to black ──
+        var t3 = (elapsed - T_FLASH3) / (T_FADE_END - T_FLASH3);
+        var dotAlpha = 1 - easeOut(t3);
+        oc.style.opacity = '1';
+        octx.fillStyle = '#000';
+        octx.fillRect(0, 0, ow, oh);
+        octx.fillStyle = 'rgba(74,255,74,' + (dotAlpha * 0.9) + ')';
+        octx.fillRect(cy - 3, cy - 3, 6, 6);
+
+      } else {
+        // ── Done: solid black then navigate ──
+        oc.style.opacity = '1';
+        octx.fillStyle = '#000';
+        octx.fillRect(0, 0, ow, oh);
+        if (!navigated) {
+          navigated = true;
+          window.setTimeout(function(){ window.location.href = APP_URL; }, 40);
+        }
+        return; // stop rAF
+      }
+
+      crtRAF = window.requestAnimationFrame(frame);
+    }
+
+    crtRAF = window.requestAnimationFrame(frame);
+  }
+  // ── End CRT shutdown ─────────────────────────────────────────────────────
+
   btnEl.addEventListener('click', function(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -501,8 +680,9 @@
     btnEl.style.pointerEvents = 'none';
     if (scrambleRAF) window.cancelAnimationFrame(scrambleRAF);
     btnEl.classList.add('scrambling');
+    // Scramble resolves, then hand off to CRT shutdown
     scrambleText(defaultText, 1050, function(){
-      window.location.href = APP_URL;
+      runCRTShutdown();
     });
   });
 
