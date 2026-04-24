@@ -361,7 +361,7 @@
   <div class="content">
 
     <!-- Corp header: fixed-width pipe gives perfectly even spacing on all screens -->
-    <div class="corp-header">
+    <div class="corp-header" id="corp-header">
       <span class="part">THERMO FISHER SCIENTIFIC</span>
       <span class="pipe">|</span>
       <span class="part">CDC INVENTORY CONTROL</span>
@@ -794,6 +794,7 @@
   (function () {
     var ec      = document.getElementById('electric-canvas');
     var tribute = document.getElementById('tribute');
+    var corpHdr = document.getElementById('corp-header');
     if (!ec) return;
     var ectx;
     try { ectx = ec.getContext('2d'); } catch(e) { return; }
@@ -852,10 +853,17 @@
 
     // Tribute baseline and flicker state
     var TRIBUTE_BASE    = 0.55;  // matches CSS opacity
-    var TRIBUTE_PEAK    = 0.82;  // max on full pulse
+    var TRIBUTE_PEAK    = 0.87;  // +5% on previous 0.82
     var tributeOpacity  = TRIBUTE_BASE;
     var tributeTarget   = TRIBUTE_BASE;
-    var tributeVelocity = 0;     // spring-damper approach
+    var tributeVelocity = 0;
+
+    // Corp header flicker — starts at text-dim (~0.45 effective), peaks subtly
+    var CORP_BASE    = 0.45;
+    var CORP_PEAK    = 0.78;
+    var corpOpacity  = CORP_BASE;
+    var corpTarget   = CORP_BASE;
+    var corpVelocity = 0;
 
     // ── Spark state ───────────────────────────────────────────────────────
     var sparks         = [];    // active sparks
@@ -927,8 +935,8 @@
     function drawEdgeBreath(breathVal) {
       // Map breath to a very subtle range — max glow is intentionally modest
       // breathVal already [0,1] from octave noise; remap to [0.04, 0.22]
-      var intensity = 0.07 + breathVal * 0.28;               // [0.07 … 0.35]
-      var edgeW     = Math.max(2, Math.round(32 + breathVal * 24)); // wider band
+      var intensity = 0.10 + breathVal * 0.38;               // [0.10 … 0.48] — visible on large monitors
+      var edgeW     = Math.max(2, Math.round(38 + breathVal * 32)); // wider band on peaks
 
       // All four edges — linear gradients inward
       var edges = [
@@ -964,7 +972,7 @@
       var cR = edgeW * 1.4;
       for (var j = 0; j < corners.length; j++) {
         var cr  = ectx.createRadialGradient(corners[j].x, corners[j].y, 0, corners[j].x, corners[j].y, cR);
-        cr.addColorStop(0,   'rgba(74,255,74,' + (intensity * 0.7).toFixed(3) + ')');
+        cr.addColorStop(0,   'rgba(74,255,74,' + (intensity * 0.85).toFixed(3) + ')');
         cr.addColorStop(1,   'rgba(74,255,74,0)');
         ectx.fillStyle = cr;
         ectx.fillRect(
@@ -1056,22 +1064,26 @@
         scheduleNextSpark();
       }
 
-      // ── Tribute opacity — spring toward target ──
-      // Target tracks breathVal: gentle lift at pulse peaks only
-      // Peak threshold: breathVal > 0.55 starts nudging the tribute up
-      if (breathVal > 0.55) {
-        var lift    = (breathVal - 0.55) / 0.45; // 0→1 as breathVal goes 0.55→1
-        tributeTarget = TRIBUTE_BASE + lift * (TRIBUTE_PEAK - TRIBUTE_BASE);
-      } else {
-        tributeTarget = TRIBUTE_BASE;
-      }
-      // Spring-damper: smooth, never snappy
-      var springK  = 0.04;
-      var damping  = 0.78;
-      var delta    = tributeTarget - tributeOpacity;
-      tributeVelocity = tributeVelocity * damping + delta * springK;
+      // ── Tribute + corp header opacity — shared spring logic ──
+      // Both lift on the same breathVal threshold; corp header is slightly
+      // more responsive (lower threshold) since it starts dimmer.
+      var breathHigh = breathVal > 0.52;
+
+      // Tribute
+      tributeTarget = breathHigh
+        ? TRIBUTE_BASE + ((breathVal - 0.52) / 0.48) * (TRIBUTE_PEAK - TRIBUTE_BASE)
+        : TRIBUTE_BASE;
+      tributeVelocity = tributeVelocity * 0.78 + (tributeTarget - tributeOpacity) * 0.04;
       tributeOpacity  = Math.min(TRIBUTE_PEAK, Math.max(TRIBUTE_BASE - 0.02, tributeOpacity + tributeVelocity));
       if (tribute) tribute.style.opacity = tributeOpacity.toFixed(3);
+
+      // Corp header — same pulse, slightly wider lift range
+      corpTarget = breathHigh
+        ? CORP_BASE + ((breathVal - 0.52) / 0.48) * (CORP_PEAK - CORP_BASE)
+        : CORP_BASE;
+      corpVelocity = corpVelocity * 0.78 + (corpTarget - corpOpacity) * 0.04;
+      corpOpacity  = Math.min(CORP_PEAK, Math.max(CORP_BASE - 0.02, corpOpacity + corpVelocity));
+      if (corpHdr) corpHdr.style.opacity = corpOpacity.toFixed(3);
 
       // ── Draw ──
       ectx.clearRect(0, 0, ew, eh);
