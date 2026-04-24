@@ -96,6 +96,16 @@
   .corner.bl { bottom: 14px; left: 14px; border-bottom: 1.5px solid rgba(74,255,74,0.4); border-left: 1.5px solid rgba(74,255,74,0.4); }
   .corner.br { bottom: 14px; right: 14px; border-bottom: 1.5px solid rgba(74,255,74,0.4); border-right: 1.5px solid rgba(74,255,74,0.4); }
 
+  /* ── Electric canvas ── */
+  #electric-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 4;   /* above vignette (3), same layer as glitch canvas (4) */
+  }
+
   /* ── Tribute ── */
   .tribute {
     position: absolute;
@@ -343,7 +353,10 @@
   <div class="corner bl"></div>
   <div class="corner br"></div>
 
-  <div class="tribute">in loving memory of Andy Green</div>
+  <!-- Electric breath + corner sparks live on this canvas -->
+  <canvas id="electric-canvas"></canvas>
+
+  <div class="tribute" id="tribute">in loving memory of Andy Green</div>
 
   <div class="content">
 
@@ -771,6 +784,307 @@
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas();
   window.setTimeout(function(){ canvasOk ? runCanvasGlitch() : runCssGlitch(); }, 1200);
+
+  // ── ELECTRIC ENGINE ────────────────────────────────────────────────────────
+  // Three coordinated effects driven from a single rAF loop:
+  //   1. Edge breath  — slow irregular glow along the screen border
+  //   2. Corner sparks — rare short arcs from 1-2 corners, < 400ms each
+  //   3. Tribute flicker — gentle opacity lift on the tribute text at pulse peak
+  // ──────────────────────────────────────────────────────────────────────────
+  (function () {
+    var ec      = document.getElementById('electric-canvas');
+    var tribute = document.getElementById('tribute');
+    if (!ec) return;
+    var ectx;
+    try { ectx = ec.getContext('2d'); } catch(e) { return; }
+    if (!ectx) return;
+
+    var ew, eh;
+
+    function resizeEC() {
+      ew = ec.width  = launcher.offsetWidth;
+      eh = ec.height = launcher.offsetHeight;
+    }
+    resizeEC();
+    window.addEventListener('resize', resizeEC);
+
+    // ── Smooth noise helper (value noise, 1D) ──────────────────────────────
+    // Returns a value in [0,1] that drifts slowly over time.
+    // Uses a tiny seeded table so it never jumps.
+    var _noiseTable = (function(){
+      var t = new Float32Array(256);
+      var x = 1;
+      for (var i = 0; i < 256; i++) {
+        x = (x * 1664525 + 1013904223) & 0xffffffff;
+        t[i] = (x >>> 0) / 0xffffffff;
+      }
+      return t;
+    })();
+
+    function smoothNoise(t) {
+      // t is any float — fractional part indexes into table, cubic interp
+      var it = t & 255;
+      var ft = t - Math.floor(t);
+      var u  = ft * ft * (3 - 2 * ft); // smoothstep
+      var a  = _noiseTable[it & 255];
+      var b  = _noiseTable[(it + 1) & 255];
+      return a + (b - a) * u;
+    }
+
+    function octaveNoise(t, octaves) {
+      // Sum several octaves for more organic, irregular feel
+      var v = 0, amp = 0.5, freq = 1, max = 0;
+      for (var i = 0; i < octaves; i++) {
+        v   += smoothNoise(t * freq) * amp;
+        max += amp;
+        amp  *= 0.5;
+        freq *= 2.1;
+      }
+      return v / max; // normalize to [0,1]
+    }
+
+    // ── Breath state ──────────────────────────────────────────────────────
+    // The breath runs as a slowly-advancing noise time value.
+    // Speed is irregular — the "engine" feels like it breathes unevenly.
+    var breathTime   = 0;
+    var breathSpeed  = 0.00042;  // advance per ms — noticeably alive
+    var lastBreathMs = null;
+
+    // Tribute baseline and flicker state
+    var TRIBUTE_BASE    = 0.55;  // matches CSS opacity
+    var TRIBUTE_PEAK    = 0.82;  // max on full pulse
+    var tributeOpacity  = TRIBUTE_BASE;
+    var tributeTarget   = TRIBUTE_BASE;
+    var tributeVelocity = 0;     // spring-damper approach
+
+    // ── Spark state ───────────────────────────────────────────────────────
+    var sparks         = [];    // active sparks
+    var nextSparkDelay = 0;     // ms until next spark event
+    var sparkTimer     = 0;
+    var lastSparkMs    = null;
+
+    function scheduleNextSpark() {
+      // Fire a spark event every 5–11 seconds, randomised
+      nextSparkDelay = 5000 + Math.random() * 6000;
+      sparkTimer     = 0;
+    }
+    scheduleNextSpark();
+
+    // Corner definitions: { cx, cy, dx, dy }
+    // cx/cy = corner pixel position (set on resize), dx/dy = arc direction multipliers
+    var CORNERS = [
+      { key:'tl', dx: 1,  dy: 1  },
+      { key:'tr', dx:-1,  dy: 1  },
+      { key:'bl', dx: 1,  dy:-1  },
+      { key:'br', dx:-1,  dy:-1  },
+    ];
+
+    function cornerPos(key) {
+      var pad = 14, arm = 18;
+      switch(key) {
+        case 'tl': return { x: pad,      y: pad      };
+        case 'tr': return { x: ew - pad, y: pad      };
+        case 'bl': return { x: pad,      y: eh - pad };
+        case 'br': return { x: ew - pad, y: eh - pad };
+      }
+    }
+
+    function emitSparkEvent() {
+      // Pick 1 or 2 corners to spark (weighted toward 1)
+      var count = Math.random() < 0.3 ? 2 : 1;
+      var pool  = CORNERS.slice().sort(function(){ return Math.random() - 0.5; });
+      for (var i = 0; i < count; i++) {
+        var c   = pool[i];
+        var pos = cornerPos(c.key);
+        // Each spark: an arc that jags out from the corner tip
+        // arc = array of {x,y} waypoints; life in [0,1]; decay rate
+        var segCount = 4 + Math.floor(Math.random() * 3); // 4–6 segments
+        var pts = [{ x: pos.x, y: pos.y }];
+        var cx  = pos.x, cy2 = pos.y;
+        var maxLen = 45 + Math.random() * 40;  // total reach 45–85 px — real zap
+        var segLen = maxLen / segCount;
+        for (var s = 0; s < segCount; s++) {
+          // Primary direction: away from corner, with random jag perpendicular
+          var angle = (c.dx > 0 ? 0 : Math.PI) + (c.dy > 0 ? 0.4 : -0.4)
+                    + (Math.random() - 0.5) * 1.2;
+          cx  += Math.cos(angle) * segLen * (0.7 + Math.random() * 0.6);
+          cy2 += Math.sin(angle) * segLen * (0.7 + Math.random() * 0.6);
+          pts.push({ x: cx, y: cy2 });
+        }
+        sparks.push({
+          pts:   pts,
+          life:  1.0,
+          decay: 0.020 + Math.random() * 0.016, // lifetime ~40–70 frames
+          alpha: 0.75 + Math.random() * 0.20,   // bright but not blown out
+          width: 1.8 + Math.random() * 1.4,     // thick main stroke
+        });
+      }
+    }
+
+    // ── Draw edge glow ────────────────────────────────────────────────────
+    // Draws a thin gradient glow along all four edges.
+    // breathVal in [0,1] drives the intensity.
+    function drawEdgeBreath(breathVal) {
+      // Map breath to a very subtle range — max glow is intentionally modest
+      // breathVal already [0,1] from octave noise; remap to [0.04, 0.22]
+      var intensity = 0.07 + breathVal * 0.28;               // [0.07 … 0.35]
+      var edgeW     = Math.max(2, Math.round(32 + breathVal * 24)); // wider band
+
+      // All four edges — linear gradients inward
+      var edges = [
+        { x0:0, y0:0,  x1:0,  y1:edgeW,  w:ew, h:edgeW, gx0:0,   gy0:0,   gx1:0,   gy1:edgeW },  // top
+        { x0:0, y0:eh-edgeW, x1:0, y1:eh, w:ew, h:edgeW, gx0:0,   gy0:eh,  gx1:0,   gy1:eh-edgeW }, // bottom
+        { x0:0, y0:0,  x1:edgeW, y1:0, w:edgeW, h:eh, gx0:0,   gy0:0,   gx1:edgeW, gy1:0 },  // left
+        { x0:ew-edgeW, y0:0, x1:ew, y1:0, w:edgeW, h:eh, gx0:ew,  gy0:0,   gx1:ew-edgeW, gy1:0 }, // right
+      ];
+
+      for (var i = 0; i < edges.length; i++) {
+        var e  = edges[i];
+        var gd = ectx.createLinearGradient(e.gx0, e.gy0, e.gx1, e.gy1);
+        gd.addColorStop(0,   'rgba(61,221,61,' + intensity.toFixed(3) + ')');
+        gd.addColorStop(0.4, 'rgba(61,221,61,' + (intensity * 0.35).toFixed(3) + ')');
+        gd.addColorStop(1,   'rgba(61,221,61,0)');
+        ectx.fillStyle = gd;
+        if (i < 2) {
+          // top/bottom — full width
+          ectx.fillRect(0, i === 0 ? 0 : eh - edgeW, ew, edgeW);
+        } else {
+          // left/right — full height
+          ectx.fillRect(i === 2 ? 0 : ew - edgeW, 0, edgeW, eh);
+        }
+      }
+
+      // Corner junctions — radial blobs that strengthen where edges meet
+      var corners = [
+        { x:0,  y:0  },
+        { x:ew, y:0  },
+        { x:0,  y:eh },
+        { x:ew, y:eh },
+      ];
+      var cR = edgeW * 1.4;
+      for (var j = 0; j < corners.length; j++) {
+        var cr  = ectx.createRadialGradient(corners[j].x, corners[j].y, 0, corners[j].x, corners[j].y, cR);
+        cr.addColorStop(0,   'rgba(74,255,74,' + (intensity * 0.7).toFixed(3) + ')');
+        cr.addColorStop(1,   'rgba(74,255,74,0)');
+        ectx.fillStyle = cr;
+        ectx.fillRect(
+          corners[j].x === 0 ? 0 : ew - cR,
+          corners[j].y === 0 ? 0 : eh - cR,
+          cR, cR
+        );
+      }
+    }
+
+    // ── Draw sparks ───────────────────────────────────────────────────────
+    function drawSparks() {
+      for (var i = sparks.length - 1; i >= 0; i--) {
+        var sp = sparks[i];
+        sp.life -= sp.decay;
+        if (sp.life <= 0) { sparks.splice(i, 1); continue; }
+
+        var alpha = sp.alpha * sp.life * sp.life; // quadratic fade — sharp entry, soft exit
+
+        // ── Outer glow pass — wide, diffuse ──
+        ectx.save();
+        ectx.strokeStyle = 'rgba(61,221,61,' + (alpha * 0.55).toFixed(3) + ')';
+        ectx.lineWidth   = sp.width * sp.life * 3.5;
+        ectx.shadowColor = 'rgba(74,255,74,' + (alpha * 0.7).toFixed(3) + ')';
+        ectx.shadowBlur  = 18;
+        ectx.lineJoin    = 'round';
+        ectx.lineCap     = 'round';
+        ectx.beginPath();
+        ectx.moveTo(sp.pts[0].x, sp.pts[0].y);
+        for (var p = 1; p < sp.pts.length; p++) ectx.lineTo(sp.pts[p].x, sp.pts[p].y);
+        ectx.stroke();
+        ectx.restore();
+
+        // ── Main green stroke ──
+        ectx.save();
+        ectx.strokeStyle = 'rgba(100,255,100,' + alpha.toFixed(3) + ')';
+        ectx.lineWidth   = sp.width * sp.life;
+        ectx.shadowColor = 'rgba(74,255,74,' + alpha.toFixed(3) + ')';
+        ectx.shadowBlur  = 10;
+        ectx.lineJoin    = 'round';
+        ectx.lineCap     = 'round';
+        ectx.beginPath();
+        ectx.moveTo(sp.pts[0].x, sp.pts[0].y);
+        for (var p = 1; p < sp.pts.length; p++) ectx.lineTo(sp.pts[p].x, sp.pts[p].y);
+        ectx.stroke();
+        ectx.restore();
+
+        // ── White-green core — thin hot line, early life only ──
+        if (sp.life > 0.35) {
+          var coreAlpha = (sp.life - 0.35) / 0.65 * alpha * 0.9;
+          ectx.save();
+          ectx.strokeStyle = 'rgba(210,255,210,' + coreAlpha.toFixed(3) + ')';
+          ectx.lineWidth   = Math.max(0.4, sp.width * sp.life * 0.28);
+          ectx.lineJoin    = 'round';
+          ectx.lineCap     = 'round';
+          ectx.beginPath();
+          ectx.moveTo(sp.pts[0].x, sp.pts[0].y);
+          for (var p = 1; p < sp.pts.length; p++) ectx.lineTo(sp.pts[p].x, sp.pts[p].y);
+          ectx.stroke();
+          ectx.restore();
+        }
+      }
+    }
+
+    // ── Main rAF loop ────────────────────────────────────────────────────
+    function electricFrame(ts) {
+      // ── Delta time ──
+      if (lastBreathMs === null) lastBreathMs = ts;
+      var dt = Math.min(ts - lastBreathMs, 80); // cap delta to avoid huge jumps on tab re-focus
+      lastBreathMs = ts;
+
+      // ── Advance breath ──
+      // Speed has a gentle wobble so the pulse feels uneven — like current fluctuating
+      var speedWobble = 0.7 + smoothNoise(breathTime * 0.3) * 0.6;
+      breathTime += dt * breathSpeed * speedWobble;
+
+      // Breath value: multi-octave noise, shaped so it occasionally peaks
+      var raw  = octaveNoise(breathTime, 3);
+      // Reshape: bias toward low values with occasional brighter pulses
+      // pow(x, 1.6) pushes midrange down; occasional spikes punch through
+      var breathVal = Math.pow(raw, 1.6);
+
+      // ── Spark timer ──
+      if (lastSparkMs === null) lastSparkMs = ts;
+      sparkTimer += ts - lastSparkMs;
+      lastSparkMs = ts;
+      if (sparkTimer >= nextSparkDelay) {
+        emitSparkEvent();
+        scheduleNextSpark();
+      }
+
+      // ── Tribute opacity — spring toward target ──
+      // Target tracks breathVal: gentle lift at pulse peaks only
+      // Peak threshold: breathVal > 0.55 starts nudging the tribute up
+      if (breathVal > 0.55) {
+        var lift    = (breathVal - 0.55) / 0.45; // 0→1 as breathVal goes 0.55→1
+        tributeTarget = TRIBUTE_BASE + lift * (TRIBUTE_PEAK - TRIBUTE_BASE);
+      } else {
+        tributeTarget = TRIBUTE_BASE;
+      }
+      // Spring-damper: smooth, never snappy
+      var springK  = 0.04;
+      var damping  = 0.78;
+      var delta    = tributeTarget - tributeOpacity;
+      tributeVelocity = tributeVelocity * damping + delta * springK;
+      tributeOpacity  = Math.min(TRIBUTE_PEAK, Math.max(TRIBUTE_BASE - 0.02, tributeOpacity + tributeVelocity));
+      if (tribute) tribute.style.opacity = tributeOpacity.toFixed(3);
+
+      // ── Draw ──
+      ectx.clearRect(0, 0, ew, eh);
+      drawEdgeBreath(breathVal);
+      drawSparks();
+
+      window.requestAnimationFrame(electricFrame);
+    }
+
+    window.requestAnimationFrame(electricFrame);
+  })();
+  // ── END ELECTRIC ENGINE ───────────────────────────────────────────────────
+
 })();
 </script>
 <!-- Silent auth ping — attempts token refresh before user clicks -->
