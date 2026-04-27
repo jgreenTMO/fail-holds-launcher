@@ -852,15 +852,15 @@
     var lastBreathMs = null;
 
     // Tribute baseline and flicker state
-    var TRIBUTE_BASE    = 0.55;  // matches CSS opacity
-    var TRIBUTE_PEAK    = 0.87;  // +5% on previous 0.82
+    var TRIBUTE_BASE    = 0.15;
+    var TRIBUTE_PEAK    = .9;  
     var tributeOpacity  = TRIBUTE_BASE;
     var tributeTarget   = TRIBUTE_BASE;
     var tributeVelocity = 0;
 
     // Corp header flicker — starts at text-dim (~0.45 effective), peaks subtly
-    var CORP_BASE    = 0.45;
-    var CORP_PEAK    = 0.78;
+    var CORP_BASE    = 0.75;
+    var CORP_PEAK    = 1;
     var corpOpacity  = CORP_BASE;
     var corpTarget   = CORP_BASE;
     var corpVelocity = 0;
